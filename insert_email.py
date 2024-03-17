@@ -15,6 +15,12 @@ class Gmail:
         """
         Initializes the Gmail class.
 
+        """
+        # Lazy connect, because most of the time, we don't actually have anything to forward
+        self.mail = None
+
+    def connect(self):
+        """
         Raises:
         Exception: If the connection to the Gmail IMAP server fails.
         """
@@ -22,10 +28,6 @@ class Gmail:
         imap_host = os.getenv('IMAP_HOST')
         imap_user = os.getenv('IMAP_USER')
         imap_pass = os.getenv('IMAP_PASS_PHRASE')
-        # Lazy connect, because most of the time, we don't actually have anything to forward
-        self.mail = None
-
-    def connect(self):
         try:
             # Connect to the Gmail IMAP server
             self.mail = imaplib.IMAP4_SSL(imap_host)
@@ -48,7 +50,7 @@ class Gmail:
         body (str): The body of the message.
         date (str): The timestamp of the message. Defaults to the current timestamp.
         """
-        if not self.mail:
+        if self.mail is None:
             self.connect()
         # Create a new message (MIME format)
         msg = EmailMessage()
@@ -74,6 +76,7 @@ class Gmail:
     def close(self):
         try:
             self.mail.logout()
+            self.mail = None
             print('Gmail: Logged out.')
         except Exception as e:
             print(f'Gmail: Error logging out.')

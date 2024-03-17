@@ -10,6 +10,7 @@ from insert_email import Gmail
 import email.utils
 from time import sleep
 from datetime import datetime
+from gippity import format_message
 
 # Load environment variables
 load_dotenv()
@@ -64,7 +65,7 @@ async def main():
         # Click on the message
         await message.click()
         # await page.waitForNavigation(waitUntil='networkidle0') # Wait for all content to load
-        await asyncio.sleep(5) # Let UI settle
+        await asyncio.sleep(2) # Let UI settle
 
         # Extract headers
         header_texts = await page.evaluate('''() => {
@@ -89,20 +90,11 @@ async def main():
         is_new = await store_message(received, sent_by, message_text)
         print(f"[{'new' if is_new else 'old'}] Message {i+1: 3d}/{len(messages)}: {received}, {sent_by}, {message_text}")
         if not is_new:
-            # find out what its forwarded flag is
-            async with aiosqlite.connect(DATABASE_PATH) as db:
-                cursor = db.execute('''SELECT forwarded FROM messages WHERE received =? AND sent_by =? AND message_text = ?''', (received, sent_by, message_text))
-                message_row = await cursor.fetchone()
-                if message_row:
-                    has_been_forwarded = message_row[0]
-                else:
-                    has_been_forwarded = False
-            if has_been_forwarded:
-                print(f"Skipping {len(messages)-i-1} previously forwarded messages")
-                break
+            print(f"Skipping {len(messages)-i-1} previously seen messages")
+            break
 
         await page.click(".slideover-content button.arbor-cancel-button") # Close the message
-        await asyncio.sleep(3) # Let UI settle
+        await asyncio.sleep(1) # Let UI settle
 
     await browser.close() # not really need to await, but do it anyway
 
@@ -133,8 +125,8 @@ async def forward_new_messages():
             except Exception as e:
                 print(f"Warning: Could not parse date {received}, substituting current time")
                 date = email.utils.formatdate(localtime=True)
-            body = f"{message_text}"
-            subject = f"Arbor message - {body[:30]}{'...' if len(body)>30 else ''}" # Truncate the subject to 20 characters
+            subject, body = format_message(f"{message_text}")
+            subject = f"Arbor message - {subject}"
             to_addr = FORWARD_TO_EMAIL
             from_name = sent_by.split("<")[0].strip()
             from_name_sanitized = "".join([c for c in from_name if c.isalpha() or c.isdigit() or c in "_-(). "]).rstrip()
