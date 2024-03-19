@@ -7,7 +7,7 @@ import re
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
-model = os.getenv("OPENAI_MODEL") or "gpt-4-turbo"
+model = os.getenv("OPENAI_MODEL") or "gpt-4-turbo-preview"
 
 openai_client = None
 
@@ -41,7 +41,7 @@ def format_message(message_text: str) -> tuple[str, str]:
                     "content": prompt
                 }
             ],
-            model="gpt-4-turbo-preview",
+            model=model,
         )
         s = response.choices[0].message.content
     except Exception as e:
