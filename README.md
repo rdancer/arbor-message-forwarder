@@ -1,10 +1,10 @@
-# Arbor Messages Forwarder<br />🌳 ➡️ 📧
+# Arbor Message Forwarder<br />🌳 ➡️ 📧
 
 ## Overview
 This script automates the process of logging into the Arbor portal, extracting school messages, and forwarding them to a specified email address.
 
 ### Optionally use GPT-4 to add line breaks and a subject
-The messages come as a single line, with no subject. Adding paragraph breaks and a subject line greatly improves readability. To enable this functionality, specify your OPENAI_API_KEY in the `.env` file.
+The messages come as a single run-on line, and there is no subject. Adding paragraph breaks and a subject line greatly improves readability. To enable, specify your OPENAI_API_KEY in the `.env` file.
 
 ## Requirements
 
