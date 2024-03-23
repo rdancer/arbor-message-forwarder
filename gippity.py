@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import re
 
 # Load environment
-load_dotenv()
+load_dotenv(override=True)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 model = os.getenv("OPENAI_MODEL") or "gpt-4-turbo"

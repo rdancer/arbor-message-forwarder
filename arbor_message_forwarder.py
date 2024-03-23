@@ -13,7 +13,7 @@ from datetime import datetime
 from gippity import format_message
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 EMAIL = os.getenv("EMAIL")
 PASS_PHRASE = os.getenv("PASS_PHRASE")
 FROM_EMAIL = os.getenv("FROM_EMAIL")
