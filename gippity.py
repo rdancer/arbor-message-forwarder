@@ -1,7 +1,10 @@
+import json
 import openai
 import os
 from dotenv import load_dotenv
 import re
+
+REFORMAT_ATTEMPTS = 3
 
 # Load environment
 load_dotenv(override=True)
@@ -42,18 +45,26 @@ def format_message(message_text: str) -> tuple[str, str]:
                 }
             ],
             model="gpt-4-turbo-preview",
+            n=REFORMAT_ATTEMPTS,
         )
-        s = response.choices[0].message.content
+        ai_texts = [choice.message.content for choice in response.choices]
     except Exception as e:
         print(f"Failed to reformat message: {e}")
         return default_subject, message_text
-    subject = extract_subject(s) 
-    body_text = extract_body_text(message_text, s[(s.find(subject) + len(subject)) if subject else 0:])
+    subjects = [extract_subject(ai_text) for ai_text in ai_texts]
+    body_texts = [extract_body_text(message_text, ai_text, subject) for (ai_text, subject) in zip(ai_texts, subjects)]
+    subject = next((s for s in subjects if s is not None and len(s) > 0), default_subject)
     if os.getenv("DEBUG") == "True":
-        print(f"Original: {message_text}\nMatched: {s}\nSubject: {subject}\nBody: {body_text}")
+        print(f"Body texts: {json.dumps(body_texts, indent=4)}")
+    body_texts.sort(key=lambda x: x[1], reverse=True)
+    body_text = body_texts[0][0]
+    if os.getenv("DEBUG") == "True":
+        print(f"Subject: {subject}\nBody:\n{body_text}\nOriginal:\n{message_text}")
     return subject, body_text
 
-def extract_body_text(message_text, ai_text: str) -> str:
+def extract_body_text(message_text: str, ai_text: str, subject: str) -> str:
+    # Start extraction after the subject
+    ai_text = ai_text[(ai_text.find(subject) + len(subject)) if subject else 0:]
     message_text = message_text.strip()
     ai_text = ai_text.strip()
     i = 0
@@ -84,11 +95,15 @@ def extract_body_text(message_text, ai_text: str) -> str:
                 print("\033[0m", end="")
                 print("="* 80)
                 out += message_text[i:]
+                problem_idx = i
                 break
     except Exception as e:
         print(f"Warning: Failed to match AI and original text: {e}")
         out += message_text[i:]
-    return out
+        problem_idx = i
+    # Even among successes, we prefer the longer texts, i.e. more formatting applied: len(out) instead of len(message_text)
+    success_length = len(out) if "problem_idx" not in locals() else problem_idx
+    return out, success_length
 
 def extract_subject(s: str) -> str:
     subject = None
