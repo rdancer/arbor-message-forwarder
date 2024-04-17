@@ -9,3 +9,14 @@ install-crontab:
 	EDITOR="$$PWD/crontab-editor.sh"; PPWD="$$PWD"; export EDITOR PPWD; crontab -e
 	@echo "Crontab installed; new crontab:"
 	crontab -l
+
+.PHONY: install
+install: mrproper
+	python3.10 -m venv venv
+	. venv/bin/activate && ( \
+            pip install -r requirements.txt \
+        )
+
+.PHONY: mrproper
+mrproper:
+	rm -rf venv/
