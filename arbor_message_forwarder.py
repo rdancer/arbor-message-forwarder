@@ -21,6 +21,8 @@ FORWARD_TO_EMAIL = os.getenv("FORWARD_TO_EMAIL")
 DATABASE_PATH = os.getenv("DATABASE_PATH")
 ASSUME_SKIP_OLD_MESSAGES = os.getenv("ASSUME_SKIP_OLD_MESSAGES") == "True"
 DEBUG_HEADFUL = os.getenv("DEBUG_HEADFUL") == "True"
+APPLY_GMAIL_LABELS = os.getenv("APPLY_GMAIL_LABELS", "").split(",") if os.getenv("APPLY_GMAIL_LABELS") else []
+MESSABE_SUBJECT_PREFIX = os.getenv("MESSAGE_SUBJECT_PREFIX", "Arbor message - ")
 
 async def main():
     setup_pyppeteer()
@@ -126,14 +128,15 @@ async def forward_new_messages():
                 print(f"Warning: Could not parse date {received}, substituting current time")
                 date = email.utils.formatdate(localtime=True)
             subject, body = format_message(f"{message_text}")
-            subject = f"Arbor message - {subject}"
+            if MESSABE_SUBJECT_PREFIX:
+                subject = f"{MESSABE_SUBJECT_PREFIX}{subject}"
             to_addr = FORWARD_TO_EMAIL
             from_name = sent_by.split("<")[0].strip()
             from_name_sanitized = "".join([c for c in from_name if c.isalpha() or c.isdigit() or c in "_-(). "]).rstrip()
             from_addr = f"{from_name_sanitized}<{FROM_EMAIL}>"  # This is the 'From' address for the email, set in .env
             
             # Use the Gmail class to insert the message
-            gmail.insert_message(to_addr, from_addr, subject, body, date)
+            gmail.insert_message(to_addr, from_addr, subject, body, date, gmail_labels=APPLY_GMAIL_LABELS)
             
             # Update the database to mark the message as forwarded
             await db.execute("UPDATE messages SET forwarded=1 WHERE received=? AND sent_by=? AND message_text=?", (received, sent_by, message_text))

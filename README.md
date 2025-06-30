@@ -21,5 +21,7 @@ The messages come as a single line, with no subject. Adding paragraph breaks and
 ## Usage
 Run the script with `python arbor_message_forwarder.py` from Cron. The script will automatically perform all its tasks in the background, and new messages should automatically appear in your forwarding e-mail inbox.
 
+The messages are automatically labelled with the label `Arbor` (configurable in the `.env` file), so you can easily find them in your inbox, or filter/forward them. Alternatively, you can automacially add a prefix to the subjects of the messages.
+
 ## Note
 On the first run, the script will attempt to install a version of the Chromium browser compatible with Pyppeteer (if it is not already installed).
