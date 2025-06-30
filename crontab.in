@@ -1,0 +1,6 @@
+# crontab.in -- crontab(5) template
+#
+# Install by running `make install-crontab`
+#
+# min hr dom mon dow command
+$MINUTES 8-18 * * 1-5 cd "$PWD" && exec nice make run; : magic=mA0XfuSAmmFFJwgPT6DvEEOcE7ORzA
