@@ -22,7 +22,7 @@ DATABASE_PATH = os.getenv("DATABASE_PATH")
 ASSUME_SKIP_OLD_MESSAGES = os.getenv("ASSUME_SKIP_OLD_MESSAGES") == "True"
 DEBUG_HEADFUL = os.getenv("DEBUG_HEADFUL") == "True"
 APPLY_GMAIL_LABELS = os.getenv("APPLY_GMAIL_LABELS", "").split(",") if os.getenv("APPLY_GMAIL_LABELS") else []
-MESSABE_SUBJECT_PREFIX = os.getenv("MESSAGE_SUBJECT_PREFIX", "Arbor message - ")
+MESSAGE_SUBJECT_PREFIX = os.getenv("MESSAGE_SUBJECT_PREFIX", "Arbor message - ")
 
 async def main():
     setup_pyppeteer()
@@ -128,8 +128,8 @@ async def forward_new_messages():
                 print(f"Warning: Could not parse date {received}, substituting current time")
                 date = email.utils.formatdate(localtime=True)
             subject, body = format_message(f"{message_text}")
-            if MESSABE_SUBJECT_PREFIX:
-                subject = f"{MESSABE_SUBJECT_PREFIX}{subject}"
+            if MESSAGE_SUBJECT_PREFIX:
+                subject = f"{MESSAGE_SUBJECT_PREFIX}{subject}"
             to_addr = FORWARD_TO_EMAIL
             from_name = sent_by.split("<")[0].strip()
             from_name_sanitized = "".join([c for c in from_name if c.isalpha() or c.isdigit() or c in "_-(). "]).rstrip()
