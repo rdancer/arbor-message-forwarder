@@ -17,6 +17,7 @@ The messages come as a single run-on line, and there is no subject. Adding parag
 2. Clone or download this script to your local machine.
 3. Install the required Python packages by running `pip install -r requirements.txt`.
 4. Rename `.env.template` to `.env` and update it with your Arbor, IMAP, and (optionally) OpenAI credentials, the e-mail the messages will appear to have been sent from, and the forwarding email.
+5. If the *Arbor* portal is not in the same timezone, set `ARBOR_TIMEZONE` in the `.env` file (e.g. `Europe/London`).
 
 ## Usage
 Run the script with `python arbor_message_forwarder.py` from Cron. The script will automatically perform all its tasks in the background, and new messages should automatically appear in your forwarding e-mail inbox.

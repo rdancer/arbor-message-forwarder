@@ -5,6 +5,9 @@ from pyppeteer import launch
 from pyppeteer import chromium_downloader
 from dotenv import load_dotenv
 import os
+import sys
+from tzlocal import get_localzone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import aiosqlite
 from insert_email import Gmail
 import email.utils
@@ -23,6 +26,14 @@ ASSUME_SKIP_OLD_MESSAGES = os.getenv("ASSUME_SKIP_OLD_MESSAGES") == "True"
 DEBUG_HEADFUL = os.getenv("DEBUG_HEADFUL") == "True"
 APPLY_GMAIL_LABELS = os.getenv("APPLY_GMAIL_LABELS", "").split(",") if os.getenv("APPLY_GMAIL_LABELS") else []
 MESSAGE_SUBJECT_PREFIX = os.getenv("MESSAGE_SUBJECT_PREFIX", "Arbor message - ")
+
+# Timezones are such a headache
+ARBOR_TIMEZONE = os.getenv("ARBOR_TIMEZONE", '').strip() or str(get_localzone()) # e.g. Europe/London
+try:
+    ZoneInfo(ARBOR_TIMEZONE)
+except ZoneInfoNotFoundError:
+    print(f"Invalid timezone: {ARBOR_TIMEZONE}. Please set ARBOR_TIMEZONE to a valid timezone, e.g. Europe/London, or leave it empty to use the local timezone.")
+    sys.exit(1)
 
 async def main():
     setup_pyppeteer()
@@ -123,7 +134,7 @@ async def forward_new_messages():
         for received, sent_by, message_text in messages:
             # Construct the email body with received date and sender
             try:
-                date = parse_custom_date_format(received, localtime=True)
+                date = parse_custom_date_format(received, tz_name=ARBOR_TIMEZONE)
             except Exception as e:
                 print(f"Warning: Could not parse date {received}, substituting current time")
                 date = email.utils.formatdate(localtime=True)
@@ -168,25 +179,25 @@ async def setup_database():
 import email.utils
 from datetime import datetime
 
-def parse_custom_date_format(date_str: str, localtime=False) -> str:
+def parse_custom_date_format(date_str: str, tz_name: str) -> str:
     """
-    Parses ther Arbor date format and returns the same date in a RFC-2822 format.
+    Parses the Arbor date format and returns the same date in a RFC-2822 format.
      
     Example:
        "02 March 2024, 12:00" -> "Sat, 02 Mar 2024 12:00:00 -0000"
 
     Args:
         date_str (str): The date string in a non-standard format, e.g., "12 March 2024, 12:00".
+        tz_name (str): The timezone name, e.g. Europe/London -- `date_str` and the returned date will be in this timezone.
     
     Returns:
         str: The date string in RFC-2822 format.
     """
     try:
         dt = datetime.strptime(date_str, "%d %B %Y, %H:%M")
-        standardized_date = dt.strftime("%a, %d %b %Y %H:%M:%S -0000")
-        parsed_date = email.utils.parsedate_tz(standardized_date)
-        timestamp = email.utils.mktime_tz(parsed_date)
-        formatted_date = email.utils.formatdate(timestamp, localtime=localtime)
+        tzinfo = ZoneInfo(tz_name)
+        dt = dt.replace(tzinfo=tzinfo)
+        formatted_date = dt.strftime("%a, %d %b %Y %H:%M:%S %z")
         return formatted_date
     except ValueError as e:
         raise ValueError(f"Error parsing date: {e}")
