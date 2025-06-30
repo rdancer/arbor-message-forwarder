@@ -25,3 +25,12 @@ The messages are automatically labelled with the label `Arbor` (configurable in 
 
 ## Note
 On the first run, the script will attempt to install a version of the Chromium browser compatible with Pyppeteer (if it is not already installed).
+
+### Troubleshooting
+
+(OS X only) If you want to run from `cron` periodically (recommended), go to *System Settings > Privacy & Security > Full Disk Access*, and add `/usr/sbin/cron` to the list, then either restart the computer, or run the following commands from the terminal:
+
+```
+sudo launchctl stop com.apple.periodic-daily
+sudo launchctl start com.apple.periodic-daily
+```
